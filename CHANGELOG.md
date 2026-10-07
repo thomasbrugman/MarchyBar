@@ -4,6 +4,15 @@ All notable changes to MarchyBar are documented here. This project follows [Sema
 
 ## Unreleased
 
+## 1.0.2 — 2026-10-07
+
+Security release for the privileged device broker. Administrators must install the matching reviewed `marchybar-system-1.0.2-1` package and run **Set up Touch Bar** again to update the installed helper.
+
+- Authenticate Unix peer credentials and require an active local logind session before the first blocking request read, closing unauthorized idle connections immediately.
+- Limit concurrent handlers to eight before thread creation, including authorization checks, and bound the accept backlog to eight to prevent unbounded privileged thread allocation. Return slots after disconnects, handler errors, and failed thread creation.
+- Preserve per-operation session checks, inactive-owner release, and disconnect cleanup; add regressions covering peer authorization, real Unix-socket idle exhaustion, slot reuse, and inactive-owner cleanup.
+- Refresh broker/helper/launcher integrity hashes for the hardened broker. Synchronize the plugin and system package versions at 1.0.2 and reset the package release to 1.
+
 ## 1.0.1 — 2026-09-19
 
 - Correct the plugin author metadata to the repository owner (`Githubguy132010`) so the marketplace listing attributes MarchyBar correctly.

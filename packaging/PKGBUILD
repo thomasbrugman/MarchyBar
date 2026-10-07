@@ -1,8 +1,8 @@
 # Build as an ordinary user from a separately reviewed, trusted source snapshot.
 # No install hook: installing the package does not enable the device service.
 pkgname=marchybar-system
-pkgver=1.0.1
-pkgrel=2
+pkgver=1.0.2
+pkgrel=1
 pkgdesc='Root-owned, integrity-bound MarchyBar device setup helper'
 arch=('any')
 license=('GPL-3.0-or-later')
