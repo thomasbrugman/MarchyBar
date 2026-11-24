@@ -6,7 +6,7 @@ import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { EventEmitter } from 'node:events';
 import { clamp } from './model.mjs';
-import { visibleWorkspaces, usesPerMonitorWorkspaces } from './workspaces.mjs';
+import { visibleWorkspaces, readWorkspaceBlocks } from './workspaces.mjs';
 const execute = promisify(execFile);
 export async function run(file, args = [], options = {}) {
   const { stdout } = await execute(file, args, { timeout: 3500, maxBuffer: 2 * 1024 * 1024, encoding: 'utf8', ...options });
@@ -69,7 +69,8 @@ export class LiveData extends EventEmitter {
         try {
           const [window, workspaces, active] = await Promise.all(['activewindow', 'workspaces', 'activeworkspace'].map(v => run('hyprctl', [v, '-j']).then(JSON.parse)));
           if (this.stopped || this.contextDirty) continue;
-          const patch = { workspace: active.id, workspaces: visibleWorkspaces(workspaces, active, usesPerMonitorWorkspaces()) };
+          const blocks = readWorkspaceBlocks();
+          const patch = { workspace: active.id, workspaces: visibleWorkspaces(workspaces, active, blocks !== null, blocks?.get(active.monitor)) };
           if (!this.editorFocused && !/marchybar/i.test(window.class || '')) { patch.app = window.class || ''; patch.title = window.title || ''; }
           this.update(patch);
         } catch {}

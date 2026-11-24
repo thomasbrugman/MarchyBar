@@ -2,6 +2,15 @@
 
 Snapshot: 5 September 2026. This is a working first implementation, not a claim that eight physical machines were tested.
 
+## Omarchy 4.5.0 stable review
+
+- [The T2 installer](https://github.com/basecamp/omarchy/blob/v4.5.0/install/hardware/apple/fix-t2.sh) still installs `linux-t2` and its headers on detected T2 Macs. This does not verify that a given machine boots the kernel, exposes the DRM and input devices, or can lease them.
+- [The UWSM session environment](https://github.com/basecamp/omarchy/blob/v4.5.0/default/uwsm/env.d/10-omarchy) activates the mise shims, and [Omarchy's default tool declarations](https://github.com/basecamp/omarchy/blob/v4.5.0/etc/mise/conf.d/omarchy-tools.toml) include lazy Node. MarchyBar's documented Arch package installation remains an option. A clean UWSM session's first invocation of Node/npm has not been tested.
+- [The 4.5.0 palette](https://github.com/basecamp/omarchy/blob/v4.5.0/shell/Commons/Color.qml) still exposes `background`, `foreground`, `accent`, `muted` and `urgent`; [the style singleton](https://github.com/basecamp/omarchy/blob/v4.5.0/shell/Commons/Style.qml) still has the font and radius properties MarchyBar uses. This was checked in source, not in a running Quickshell session.
+- [Omarchy's workspace widget](https://github.com/basecamp/omarchy/blob/v4.5.0/shell/plugins/bar/widgets/Workspaces.qml) takes the monitor's assigned block from the connector mapping, not from the active workspace when it is a guest from an unplugged display. MarchyBar now reads that mapping too; the regression exercises the live-data code with a real state-file fixture and mocked Hyprland replies.
+
+On a macOS 26.6.2 Apple Silicon VM, platform-independent Node tests and the workspace fixture can run. The native addon requires Linux DRM, evdev and udev; the preview also needs the addon and Linux `/proc/self/fd` socket binding. No native build, running UI, or physical Touch Bar verification was possible on that VM. AppKit and Xcode simulator checks would not exercise MarchyBar's Linux device or renderer path. Retest on Omarchy 4.5.0 on an Intel T2 Mac: launch and inspect the editor, test workspace selection on multiple monitors including a guest workspace, verify panel output and touch/Fn input, and check that disable and lock restore the device.
+
 ## Omarchy 4.0.5, 4.0.6 and 4.5.0-rc1 review — 22 October 2026
 
 No T2 Mac was available for this review. Everything below comes from reading release notes and source, not from running MarchyBar.

@@ -139,6 +139,35 @@ test('context requests during an in-flight batch coalesce into a trailing refres
   assert.equal(selectPreset({ presets, settings: DEFAULT_SETTINGS, rules: DEFAULT_RULES, context: live.data }).id, 'developer');
 });
 
+test('a focused guest keeps its host monitor’s workspace block and labels', async t => {
+  const state = fs.mkdtempSync(path.join(os.tmpdir(), 'marchybar-workspaces-'));
+  const previous = process.env.XDG_STATE_HOME;
+  const live = new LiveData();
+  t.after(() => {
+    live.stop();
+    if (previous === undefined) delete process.env.XDG_STATE_HOME;
+    else process.env.XDG_STATE_HOME = previous;
+    fs.rmSync(state, { recursive: true, force: true });
+  });
+  process.env.XDG_STATE_HOME = state;
+  fs.mkdirSync(path.join(state, 'omarchy'));
+  fs.writeFileSync(path.join(state, 'omarchy', 'monitor-workspaces'), '0\t\tUnplugged monitor\n1\teDP-1\tBuilt-in panel\n2\tDP-2\tExternal monitor\n');
+  const workspace = (id, monitor, monitorID) => ({ id, name: String(id), monitor, monitorID, windows: 1 });
+  const guest = workspace(2, 'eDP-1', 0);
+  const replies = {
+    activewindow: { class: 'code' },
+    workspaces: [guest, workspace(13, 'eDP-1', 0), workspace(11, 'eDP-1', 0), workspace(21, 'DP-2', 1)],
+    activeworkspace: guest,
+  };
+  execute = async (file, args) => {
+    assert.equal(file, 'hyprctl');
+    return { stdout: JSON.stringify(replies[args[0]]) };
+  };
+  await live.refreshContext();
+  assert.equal(live.data.workspace, 2);
+  assert.deepEqual(live.data.workspaces.map(w => [w.id, w.name]), [[11, 1], [13, 3], [2, 2]]);
+});
+
 for (const stopped of [false, true]) {
   test(`pending context refresh ${stopped ? 'stops without publishing' : 'retries a failed batch when dirty'}`, { timeout: 2000 }, async t => {
     const live = new LiveData();

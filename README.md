@@ -4,9 +4,9 @@ Your Touch Bar, at home in Omarchy.
 
 MarchyBar is a native Omarchy shell plugin for Intel T2 MacBook Pro computers. It combines an editable Touch Bar with live controls, automatic app layouts, and an Omarchy-themed preset editor.
 
-**Compatibility target:** latest stable Omarchy (4.0.6), with the T2 Linux kernel (`linux-t2`) and `appletbdrm`. Omarchy 4.0.4 migrates other machines to `linux-omarchy` but keeps T2 Macs on `linux-t2`; MarchyBar refuses hardware enablement with a recovery hint when a supported model boots any other kernel. Targets MacBookPro15,1–15,4 and MacBookPro16,1–16,4. Both 2170×60 and 2008×60 logical panels are supported; the renderer discovers actual DRM geometry and input ranges. See [validation](docs/VALIDATION.md) for the distinction between tested behavior and physical model coverage.
+**Compatibility target:** Omarchy 4.5.0 on Linux, with the T2 kernel (`linux-t2`) and `appletbdrm`. MarchyBar refuses hardware enablement with a recovery hint when a supported model boots any other kernel. Targets MacBookPro15,1–15,4 and MacBookPro16,1–16,4. Both 2170×60 and 2008×60 logical panels are supported; the renderer discovers actual DRM geometry and input ranges.
 
-Omarchy 4.5 RC1 (release candidate) has been reviewed against its source only. It has not been run on a T2 Mac. See [validation](docs/VALIDATION.md).
+Omarchy 4.5.0 has been reviewed against its source, but has not been run on a T2 Mac for this update. MarchyBar is not a macOS app: its renderer, preview backend and hardware integration rely on Linux APIs rather than AppKit or the macOS Touch Bar simulator. See [validation](docs/VALIDATION.md) for the test and hardware coverage.
 
 ![MarchyBar native preset editor](preview.png)
 
