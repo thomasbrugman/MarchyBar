@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { validatePreset, matches, selectPreset, DEFAULT_RULES, DEFAULT_SETTINGS } from '../backend/model.mjs';
 import { Store } from '../backend/store.mjs';
 import { layout, scene, Gesture } from '../backend/scene.mjs';
+import { visibleWorkspaces } from '../backend/workspaces.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const presets = fs.readdirSync(root + 'presets').map(f => JSON.parse(fs.readFileSync(root + 'presets/' + f)));
 
@@ -22,6 +23,16 @@ test('every bundled page is valid and usable at both real Touch Bar geometries',
       assert.ok(s.targets.every(t => t.x >= 0 && t.x + t.w <= width));
     }
   }
+});
+test('workspace widget keeps a focused guest visible when its monitor has seven owned workspaces', () => {
+  const preset = { pages: [{ id: 'main', widgets: [{ id: 'workspaces', type: 'workspaces', weight: 1 }] }] };
+  const workspace = id => ({ id, name: String(id), monitorID: 0 });
+  const guest = workspace(2);
+  const workspaces = visibleWorkspaces([guest, ...[11, 12, 13, 14, 15, 16, 17].map(workspace)], guest, true, 1);
+  const { commands, targets } = scene(preset, 'main', { width: 2008, height: 60 }, { workspace: guest.id, workspaces });
+  const buttons = targets.filter(t => t.action.type === 'workspace');
+  assert.deepEqual(buttons.map(t => t.action.workspace), [11, 12, 13, 14, 15, 16, 2]);
+  assert.ok(commands.some(c => c.cmd === 'fill_rect' && c.x === buttons.at(-1).x + 2 && c.y === 10 && c.a === 0.3));
 });
 test('reject malformed actions, duplicate widget IDs and missing Fn pages before saving', () => {
   const p = structuredClone(presets[0]);
