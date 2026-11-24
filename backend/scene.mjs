@@ -79,7 +79,10 @@ export function scene(preset, pageId, geometry, data = {}, theme = DEFAULT_THEME
       case 'memory': meter(b, 'Memory', data.memory); break;
       case 'app': text(data.app || 'Omarchy', b.x + 10, 6, b.w - 20, 18); text(data.title || 'Your workspace', b.x + 10, 33, b.w - 20, 12, t.muted); break;
       case 'workspaces': {
-        const ws = data.workspaces?.length ? data.workspaces.slice(0, 7) : [{ id: 1 }, { id: 2 }, { id: 3 }];
+        const workspaces = data.workspaces?.length ? data.workspaces : [{ id: 1 }, { id: 2 }, { id: 3 }];
+        const ws = workspaces.slice(0, 7);
+        const activeIndex = workspaces.findIndex(v => v.id === data.workspace);
+        if (activeIndex >= ws.length) ws[ws.length - 1] = workspaces[activeIndex];
         const unit = (b.w - 12) / ws.length;
         for (const [i, v] of ws.entries()) {
           const x = b.x + 6 + unit * i;
