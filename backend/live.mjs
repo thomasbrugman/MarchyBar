@@ -15,6 +15,26 @@ export async function run(file, args = [], options = {}) {
 const read = file => { try { return fs.readFileSync(file, 'utf8').trim(); } catch { return ''; } };
 const dirs = dir => { try { return fs.readdirSync(dir); } catch { return []; } };
 
+export function readBattery(root = '/sys/class/power_supply') {
+  const name = dirs(root).find(n => read(path.join(root, n, 'type')) === 'Battery');
+  if (!name) return { battery: null, charging: false };
+  const base = path.join(root, name);
+  const num = file => { const raw = read(path.join(base, file)); return raw === '' ? NaN : Number(raw); };
+  let battery = null;
+  for (const [nowFile, fullFile] of [['charge_now', 'charge_full'], ['energy_now', 'energy_full']]) {
+    const now = num(nowFile), full = num(fullFile);
+    if (Number.isFinite(now) && now >= 0 && Number.isFinite(full) && full > 0) {
+      battery = Math.round(clamp(100 * now / full, 0, 100));
+      break;
+    }
+  }
+  if (battery === null) {
+    const cap = num('capacity');
+    if (Number.isFinite(cap)) battery = clamp(cap, 0, 100);
+  }
+  return { battery, charging: read(path.join(base, 'status')) === 'Charging' };
+}
+
 export class LiveData extends EventEmitter {
   constructor() {
     super(); this.data = { app: '', title: '', workspace: 1, workspaces: [], media: {}, volume: null, brightness: null, keyboard: null, battery: null, cpu: null, memory: null };
@@ -120,9 +140,7 @@ export class LiveData extends EventEmitter {
     this.update({ lidClosed: /closed/i.test(lid), cpu: clamp(cpu, 0, 100), memory: mem.MemTotal ? 100 * (1 - mem.MemAvailable / mem.MemTotal) : null });
   }
   battery() {
-    const name = dirs('/sys/class/power_supply').find(n => read(`/sys/class/power_supply/${n}/type`) === 'Battery');
-    const base = `/sys/class/power_supply/${name}`;
-    this.update({ battery: name ? Number(read(base + '/capacity')) : null, charging: name ? read(base + '/status') === 'Charging' : false });
+    this.update(readBattery());
   }
   stop() { this.stopped = true; for (const t of this.timers) { clearTimeout(t); clearInterval(t); } this.timers.clear(); this.hyprSocket?.destroy(); for (const c of this.children) c.kill(); this.children.clear(); }
 }

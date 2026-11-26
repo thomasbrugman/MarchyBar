@@ -20,7 +20,7 @@ function fake() { throw new Error('Real subprocesses forbidden'); }
 fake[promisify.custom] = (...args) => execute(...args);
 cp.execFile = fake;
 syncBuiltinESMExports();
-const { Actions, LiveData } = await import('../backend/live.mjs');
+const { Actions, LiveData, readBattery } = await import('../backend/live.mjs');
 cp.execFile = original;
 syncBuiltinESMExports();
 
@@ -192,3 +192,60 @@ for (const stopped of [false, true]) {
     assert.equal(live.pending.has('context'), false);
   });
 }
+
+test('readBattery prefers charge_now/charge_full and energy_now/energy_full over design-based capacity', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'marchybar-battery-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const writeFiles = (sub, files) => {
+    const target = path.join(dir, sub);
+    fs.rmSync(target, { recursive: true, force: true });
+    for (const [k, v] of Object.entries(files)) {
+      const file = path.join(target, k);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, String(v));
+    }
+    return target;
+  };
+
+  // T2 MacBook quirk: sysfs capacity is relative to charge_full_design, while charge_now/charge_full matches UPower.
+  const t2 = writeFiles('t2', {
+    'ADP1/type': 'Mains',
+    'BAT0/type': 'Battery',
+    'BAT0/status': 'Full',
+    'BAT0/capacity': '84',
+    'BAT0/charge_now': '7298000',
+    'BAT0/charge_full': '7449000',
+    'BAT0/charge_full_design': '8790000',
+  });
+  const t2Result = readBattery(t2);
+  assert.equal(Math.round(t2Result.battery), 98);
+  assert.equal(t2Result.charging, false);
+
+  // Energy-reporting battery (clamped at 100%).
+  const energy = writeFiles('energy', {
+    'BAT0/type': 'Battery',
+    'BAT0/status': 'Charging',
+    'BAT0/capacity': '90',
+    'BAT0/energy_now': '81000000',
+    'BAT0/energy_full': '80000000',
+  });
+  assert.deepEqual(readBattery(energy), { battery: 100, charging: true });
+
+  // Fallback to capacity when charge/energy files are absent or invalid.
+  const fallback = writeFiles('fallback', {
+    'BAT0/type': 'Battery',
+    'BAT0/status': 'Discharging',
+    'BAT0/capacity': '62',
+    'BAT0/charge_now': '100',
+    'BAT0/charge_full': '0',
+  });
+  assert.deepEqual(readBattery(fallback), { battery: 62, charging: false });
+
+  // Missing battery or unreadable capacity returns null rather than 0.
+  const empty = path.join(dir, 'empty');
+  fs.mkdirSync(empty, { recursive: true });
+  assert.deepEqual(readBattery(empty), { battery: null, charging: false });
+
+  const unreadable = writeFiles('unreadable', { 'BAT0/type': 'Battery' });
+  assert.deepEqual(readBattery(unreadable), { battery: null, charging: false });
+});
