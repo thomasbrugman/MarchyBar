@@ -24,7 +24,7 @@ export function readBattery(root = '/sys/class/power_supply') {
   for (const [nowFile, fullFile] of [['charge_now', 'charge_full'], ['energy_now', 'energy_full']]) {
     const now = num(nowFile), full = num(fullFile);
     if (Number.isFinite(now) && now >= 0 && Number.isFinite(full) && full > 0) {
-      battery = clamp(100 * now / full, 0, 100);
+      battery = Math.round(clamp(100 * now / full, 0, 100));
       break;
     }
   }
