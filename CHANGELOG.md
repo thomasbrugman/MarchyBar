@@ -4,6 +4,10 @@ All notable changes to MarchyBar are documented here. This project follows [Sema
 
 ## Unreleased
 
+## 1.1.0 — 2026-11-26
+
+- Fix the battery percentage on worn T2 MacBook batteries by computing it from `charge_full`/`energy_full` instead of the kernel's design-capacity-relative value. The value is rounded to a whole number and is null when there is no battery. Contributed by @xteen16 (#60).
+- Respect Omarchy 4.5 workspace ownership for guest workspaces from unplugged displays, so the host monitor's workspaces are no longer mislabeled or sorted behind the guest (#59).
 - Rename the plugin ID from `marchybar.touchbar` to `io.github.thomasbrugman.marchybar`, the namespaced form the Omarchy plugin marketplace asks for. `marchybar update` finds installs under either folder name. Existing installs need to re-enable the plugin or reinstall; see the README. Not tested on a running Omarchy install or hardware.
 - Support Omarchy 4.5 per-monitor workspaces: when Omarchy's `monitor-workspaces` state file exists, the Touch Bar workspace widget shows only the focused monitor's workspaces, labelled 1-10 like the Omarchy bar, and taps still focus the global workspace id. Omarchy 4.0.x behavior is unchanged. Verified from the Omarchy v4.5.0-rc1 source and unit tests only, not on hardware.
 - Update the repository owner in plugin metadata, install instructions, and CODEOWNERS to `thomasbrugman` after the GitHub username change.
